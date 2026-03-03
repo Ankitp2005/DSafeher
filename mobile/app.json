@@ -1,0 +1,78 @@
+{
+    "expo": {
+        "name": "SafeHer",
+        "slug": "safeher",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+        },
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.safeher.app",
+            "infoPlist": {
+                "NSLocationAlwaysAndWhenInUseUsageDescription": "SafeHer requires your location to share your real-time position with your emergency contacts when you trigger an SOS.",
+                "NSLocationWhenInUseUsageDescription": "SafeHer requires your location to show where you are and recommend safe routes.",
+                "NSLocationAlwaysUsageDescription": "SafeHer needs access to your location in the background to ensure your emergency contacts can find you when your screen is off during an SOS.",
+                "NSContactsUsageDescription": "SafeHer accesses your contacts to let you quickly pick emergency contacts.",
+                "NSMicrophoneUsageDescription": "SafeHer needs microphone access to optionally record audio evidence during an SOS and for the fake call feature.",
+                "NSCameraUsageDescription": "SafeHer requires camera access to capture quick photo evidence when SOS is triggered.",
+                "NSFaceIDUsageDescription": "SafeHer uses biometric authentication to easily lock and unlock your app."
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#ffffff"
+            },
+            "package": "com.safeher.app",
+            "versionCode": 1,
+            "permissions": [
+                "ACCESS_COARSE_LOCATION",
+                "ACCESS_FINE_LOCATION",
+                "ACCESS_BACKGROUND_LOCATION",
+                "FOREGROUND_SERVICE",
+                "FOREGROUND_SERVICE_LOCATION",
+                "CAMERA",
+                "RECORD_AUDIO",
+                "READ_CONTACTS",
+                "VIBRATE",
+                "USE_BIOMETRIC",
+                "USE_FINGERPRINT",
+                "RECEIVE_BOOT_COMPLETED"
+            ]
+        },
+        "plugins": [
+            "expo-router",
+            [
+                "expo-location",
+                {
+                    "locationAlwaysAndWhenInUsePermission": "Allow SafeHer to access your location in the background to share live tracking during an SOS.",
+                    "isAndroidBackgroundLocationEnabled": true
+                }
+            ],
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "Allow SafeHer to take photos as evidence during an emergency."
+                }
+            ],
+            "expo-task-manager",
+            "expo-secure-store",
+            "expo-notifications"
+        ],
+        "scheme": "safeher",
+        "extra": {
+            "router": {
+                "origin": false
+            },
+            "eas": {
+                "projectId": "ea55cba7-5c92-4548-bd7e-dd1f852d9ab5"
+            }
+        }
+    }
+}
