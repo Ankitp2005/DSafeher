@@ -21,6 +21,42 @@ const twilioService = {
       console.error('Error sending OTP via Twilio:', error);
       throw error;
     }
+  },
+
+  sendSOS: async (phoneNumber, userName, trackingUrl) => {
+    if (!client) {
+      console.log(`[STUB] Twilio not configured. SOS alert for ${userName} sent to ${phoneNumber}. Track: ${trackingUrl}`);
+      return { success: true };
+    }
+    try {
+      const message = await client.messages.create({
+        body: `🚨 EMERGENCY! ${userName} has triggered a SafeHer SOS alert. Track their live location here: ${trackingUrl}`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: phoneNumber
+      });
+      return { success: true, messageId: message.sid };
+    } catch (error) {
+      console.error('Error sending SOS SMS via Twilio:', error);
+      throw error;
+    }
+  },
+
+  sendSafeNotification: async (phoneNumber, userName) => {
+    if (!client) {
+      console.log(`[STUB] Twilio not configured. Safe notification for ${userName} sent to ${phoneNumber}.`);
+      return { success: true };
+    }
+    try {
+      const message = await client.messages.create({
+        body: `✅ ${userName} has indicated they are safe. The SafeHer SOS alert has been resolved.`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: phoneNumber
+      });
+      return { success: true, messageId: message.sid };
+    } catch (error) {
+      console.error('Error sending safe notification via Twilio:', error);
+      throw error;
+    }
   }
 };
 

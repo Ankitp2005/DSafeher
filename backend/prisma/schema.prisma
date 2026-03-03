@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SosTriggerType {
+  BUTTON
+  SHAKE
+  VOICE
+  POWER
+  AUTO
+}
+
+enum SosStatus {
+  ACTIVE
+  RESOLVED
+  FALSE_ALARM
+  CANCELLED
+}
+
+enum IncidentType {
+  HARASSMENT
+  POOR_LIGHTING
+  SUSPICIOUS_ACTIVITY
+  UNSAFE_AREA
+  ASSAULT
+  FOLLOWING
+  OTHER
+}
+
+enum DangerLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CheckInStatus {
+  PENDING
+  CHECKED_IN
+  MISSED
+  SOS_TRIGGERED
+}
+
+model User {
+  id                   String             @id @default(cuid())
+  phoneNumber          String             @unique
+  fullName             String
+  email                String?
+  profilePhotoUrl      String?
+  homeAddressEncrypted String?
+  workAddressEncrypted String?
+  role                 Role               @default(USER)
+  isVerified           Boolean            @default(false)
+  isActive             Boolean            @default(true)
+  onboardingCompleted  Boolean            @default(false)
+  lastSeenAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  
+  emergencyContacts    EmergencyContact[]
+  sosAlerts            SosAlert[]
+  locationTrackings    LocationTracking[]
+  checkIns             CheckIn[]
+  refreshTokens        RefreshToken[]
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+model EmergencyContact {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  name                  String
+  phoneNumber           String
+  relationship          String
+  isPrimary             Boolean
+  notifyOnSos           Boolean  @default(true)
+  notifyOnCheckInMissed Boolean  @default(true)
+  notifyOnRouteDeviation Boolean @default(false)
+  addedAt               DateTime @default(now())
+
+  @@index([userId])
+  @@map("emergency_contacts")
+}
+
+model SosAlert {
+  id               String            @id @default(cuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id])
+  triggerType      SosTriggerType
+  status           SosStatus         @default(ACTIVE)
+  triggeredAt      DateTime          @default(now())
+  resolvedAt       DateTime?
+  initialLatitude  Float
+  initialLongitude Float
+  contactsNotified Json              // Array of {contactId, smsSent, pushSent}
+  resolutionNotes  String?
+  
+  locations        LocationTracking[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("sos_alerts")
+}
+
+model LocationTracking {
+  id           String   @id @default(cuid())
+  sosAlertId   String
+  sosAlert     SosAlert @relation(fields: [sosAlertId], references: [id])
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  latitude     Float
+  longitude    Float
+  accuracy     Float
+  speed        Float?
+  heading      Float?
+  batteryLevel Int?
+  recordedAt   DateTime @default(now())
+
+  @@index([sosAlertId])
+  @@index([recordedAt])
+  @@map("location_tracking")
+}
+
+model CommunityReport {
+  id               String       @id @default(cuid())
+  reportedByUserId String?
+  incidentType     IncidentType
+  description      String?      // @db.VarChar(500)
+  latitude         Float
+  longitude        Float
+  photoUrl         String?
+  isAnonymous      Boolean      @default(true)
+  isVerified       Boolean      @default(false)
+  upvoteCount      Int          @default(0)
+  reportedAt       DateTime     @default(now())
+  expiresAt        DateTime
+
+  @@index([expiresAt])
+  @@map("community_reports")
+}
+
+model DangerZone {
+  id              String      @id @default(cuid())
+  centerLatitude  Float
+  centerLongitude Float
+  radiusMeters    Int
+  dangerLevel     DangerLevel @default(LOW)
+  incidentCount   Int
+  lastIncidentAt  DateTime
+  isActive        Boolean     @default(true)
+
+  @@index([isActive])
+  @@map("danger_zones")
+}
+
+model CheckIn {
+  id                    String        @id @default(cuid())
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id])
+  destinationName       String
+  expectedArrivalAt     DateTime
+  checkInWindowMinutes  Int           @default(15)
+  status                CheckInStatus @default(PENDING)
+  contactsToNotify     Json
+  createdAt             DateTime      @default(now())
+
+  @@index([userId])
+  @@map("check_ins")
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  tokenHash  String    @unique
+  deviceId   String
+  deviceName String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  metadata  Json
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SafePlace {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // POLICE, HOSPITAL, etc.
+  latitude  Float
+  longitude Float
+  address   String?
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@map("safe_places")
+}

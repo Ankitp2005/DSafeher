@@ -12,8 +12,21 @@ const supabase = createClient(
 
 router.post('/trigger', authMiddleware, async (req, res) => {
     try {
-        const { trigger_type } = req.body;
+        const { trigger_type, latitude, longitude } = req.body;
         const userId = req.user.id;
+
+        if (!trigger_type) {
+            return res.status(400).json({ error: 'trigger_type is required' });
+        }
+
+        // Optional coordinate validation if provided
+        if (latitude !== undefined || longitude !== undefined) {
+            const lat = parseFloat(latitude);
+            const lng = parseFloat(longitude);
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                return res.status(400).json({ error: 'Invalid coordinates' });
+            }
+        }
 
         // Create SOS alert
         const { data: alert, error: insertError } = await supabase
@@ -79,6 +92,17 @@ router.post('/:alert_id/location', authMiddleware, async (req, res) => {
         const { latitude, longitude, accuracy, battery_level } = req.body;
         const userId = req.user.id;
 
+        if (latitude === undefined || longitude === undefined) {
+            return res.status(400).json({ error: 'latitude and longitude are required' });
+        }
+
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+
+        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            return res.status(400).json({ error: 'Invalid coordinates' });
+        }
+
         // Verify alert belongs to user
         const { data: alert } = await supabase
             .from('sos_alerts')
@@ -129,8 +153,24 @@ router.put('/:alert_id/resolve', authMiddleware, async (req, res) => {
             .update({ status: 'resolved', resolved_at: new Date() })
             .eq('id', alert_id);
 
-        // Notify contacts that user is safe (Mock logic)
-        console.log(`Resolving Alert ID: ${alert_id}. Sending SMS to contacts that user is safe.`);
+        // Notify contacts that user is safe
+        const { data: contacts } = await supabase
+            .from('emergency_contacts')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('notify_on_sos', true);
+
+        const userName = req.user.user_metadata?.full_name || "SafeHer User";
+
+        if (contacts && contacts.length > 0) {
+            for (const contact of contacts) {
+                try {
+                    await twilioService.sendSafeNotification(contact.phone_number, userName);
+                } catch (e) {
+                    console.error(`Failed to send safe notification to ${contact.name}:`, e);
+                }
+            }
+        }
 
         res.json({ success: true, status: 'resolved' });
     } catch (err) {
@@ -139,5 +179,52 @@ router.put('/:alert_id/resolve', authMiddleware, async (req, res) => {
     }
 });
 
+router.get('/active/status', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { data: alert, error } = await supabase
+            .from('sos_alerts')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 is 'no rows'
+
+        res.json({
+            success: true,
+            active: !!alert,
+            alert: alert || null
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch SOS status' });
+    }
+});
+
+router.get('/:alert_id', authMiddleware, async (req, res) => {
+    try {
+        const { alert_id } = req.params;
+        const userId = req.user.id;
+
+        const { data: alert, error } = await supabase
+            .from('sos_alerts')
+            .select('*')
+            .eq('id', alert_id)
+            .single();
+
+        if (error) throw error;
+        if (!alert || alert.user_id !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        res.json(alert);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch alert' });
+    }
+});
 
 module.exports = router;
