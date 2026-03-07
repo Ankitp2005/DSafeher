@@ -5,7 +5,7 @@ jest.mock('ioredis', () => {
     return jest.fn().mockImplementation(() => {
         const client = {
             get: jest.fn().mockImplementation(key => Promise.resolve(mockRedisData.get(key) || null)),
-            setEx: jest.fn().mockImplementation((key, ttl, val) => {
+            setex: jest.fn().mockImplementation((key, ttl, val) => {
                 mockRedisData.set(key, val);
                 return Promise.resolve('OK');
             }),
@@ -20,6 +20,7 @@ jest.mock('ioredis', () => {
             }),
             expire: jest.fn().mockResolvedValue(1),
             on: jest.fn(),
+            status: 'ready',
             isReady: true,
             connect: jest.fn().mockResolvedValue(),
             quit: jest.fn().mockResolvedValue(),

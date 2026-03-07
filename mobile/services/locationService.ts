@@ -5,7 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 const LOCALHOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${LOCALHOST}:3000/api`;
+const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${LOCALHOST}:3001/api`;
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     if (error) {

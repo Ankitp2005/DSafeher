@@ -4,12 +4,14 @@ import { Alert, Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 const LOCALHOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-const API_URL = (Constants.expoConfig?.extra?.apiUrl as string) || `http://${LOCALHOST}:3000/api`;
+const API_URL = (Constants.expoConfig?.extra?.apiUrl as string) || `http://${LOCALHOST}:3001/api`;
 
 const api: AxiosInstance = axios.create({
     baseURL: API_URL,
     timeout: 10000,
 });
+
+console.log('Mobile API URL initialized as:', API_URL);
 
 /**
  * Exponential backoff helper
@@ -50,7 +52,10 @@ api.interceptors.response.use(
         const { response } = error;
 
         // 1. Handle 401 Unauthorized (Token Expired)
-        if (response && response.status === 401 && !(originalRequest as any)._retry) {
+        // Skip refresh for auth routes — they return 401 for business logic, not expired tokens
+        const requestUrl = originalRequest?.url || '';
+        const isAuthRoute = requestUrl.includes('/auth/send-otp') || requestUrl.includes('/auth/verify-otp');
+        if (response && response.status === 401 && !(originalRequest as any)._retry && !isAuthRoute) {
             if (isRefreshing) {
                 return new Promise(function (resolve, reject) {
                     failedQueue.push({ resolve, reject });

@@ -1,0 +1,39 @@
+﻿  console.error
+    Error in verify-otp: Invalid OTP
+
+      93 |
+      94 |     } catch (error) {
+    > 95 |         console.error('Error in verify-otp:', error.message);
+         |                 ^
+      96 |         return res.status(401).json({ error: error.message || 'Invalid or expired OTP' });
+      97 |     }
+      98 | });
+
+      at error (src/routes/auth.js:95:17)
+
+  console.error
+    Error in verify-otp: Invalid OTP
+
+      93 |
+      94 |     } catch (error) {
+    > 95 |         console.error('Error in verify-otp:', error.message);
+         |                 ^
+      96 |         return res.status(401).json({ error: error.message || 'Invalid or expired OTP' });
+      97 |     }
+      98 | });
+
+      at error (src/routes/auth.js:95:17)
+
+  console.error
+    Error in verify-otp: Too many wrong attempts. Please request a new OTP.
+
+      93 |
+      94 |     } catch (error) {
+    > 95 |         console.error('Error in verify-otp:', error.message);
+         |                 ^
+      96 |         return res.status(401).json({ error: error.message || 'Invalid or expired OTP' });
+      97 |     }
+      98 | });
+
+      at error (src/routes/auth.js:95:17)
+

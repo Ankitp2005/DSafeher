@@ -22,17 +22,28 @@ class ThreatDetectionService {
     /**
      * Starts background monitoring of movement patterns
      */
-    startMonitoring() {
+    async startMonitoring() {
         if (this.isMonitoring) return;
-        this.isMonitoring = true;
 
-        Accelerometer.setUpdateInterval(100); // 10Hz
-        this.subscription = Accelerometer.addListener(data => {
-            this.analyzeMotion(data);
-            this.lastData = data;
-        });
+        try {
+            const isAvailable = await Accelerometer.isAvailableAsync();
+            if (!isAvailable) {
+                console.log('Accelerometer not available on this device. Threat detection disabled.');
+                return;
+            }
 
-        console.log('Threat Detection Service started.');
+            this.isMonitoring = true;
+            Accelerometer.setUpdateInterval(100); // 10Hz
+            this.subscription = Accelerometer.addListener(data => {
+                this.analyzeMotion(data);
+                this.lastData = data;
+            });
+
+            console.log('Threat Detection Service started.');
+        } catch (error) {
+            console.warn('Failed to start threat detection:', error);
+            this.isMonitoring = false;
+        }
     }
 
     stopMonitoring() {
@@ -63,19 +74,21 @@ class ThreatDetectionService {
             ? "We detected a sudden impact. Are you okay?"
             : "You appear to have stopped unexpectedly. Are you safe?";
 
-        // Trigger a local notification with high priority
-        await Notifications.scheduleNotificationAsync({
-            content: {
-                title: "Safety Check",
-                body: message,
-                priority: Notifications.AndroidNotificationPriority.MAX,
-                data: { type: 'safety_check', incident: type },
-            },
-            trigger: null, // immediate
-        });
+        try {
+            // Trigger a local notification with high priority
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "Safety Check",
+                    body: message,
+                    priority: Notifications.AndroidNotificationPriority.MAX,
+                    data: { type: 'safety_check', incident: type },
+                },
+                trigger: null, // immediate
+            });
+        } catch (error) {
+            console.warn('Failed to schedule safety check notification:', error);
+        }
 
-        // Start a 60-second timer. If not dismissed, trigger SOS.
-        // In a real app, this would use a background task or store state in a persisted store.
         console.log(`Safety check triggered for ${type}. Waiting for user response...`);
     }
 

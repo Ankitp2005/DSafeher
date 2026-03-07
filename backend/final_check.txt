@@ -1,0 +1,20 @@
+﻿server_unlimited_log.txt 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecifi    ed: 
+(Redis Connect    ion 
+Error: :String    ) [], 
+RemoteExcept    ion
+    + FullyQualifiedEr    
+rorId : NativeComm    
+andError
+ 
+Redis Connection Error: 
+Redis Connection Error: 
+Redis Connection Error: 
+Redis connection failed 
+permanently after 3 
+retries. Falling back to 
+in-memory store.

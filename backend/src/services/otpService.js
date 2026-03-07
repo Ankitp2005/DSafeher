@@ -1,10 +1,99 @@
 const crypto = require('crypto');
 const { parsePhoneNumberFromString } = require('libphonenumber-js');
-const { redisClient } = require('../config/redis');
+const { redisClient, getUseRedis } = require('../config/redis');
 
 const OTP_EXPIRY = 600; // 10 minutes
 const MAX_ATTEMPTS = 3;
 const MAX_REQUESTS_PER_HOUR = 5;
+
+// ─── In-memory fallback store when Redis is unavailable ───
+const memoryStore = new Map();
+const memoryTimers = new Map();
+
+function memSet(key, value, ttlSeconds) {
+    console.log(`[MEM_DEBUG] SET: ${key} = ${value} (TTL: ${ttlSeconds}s)`);
+    memoryStore.set(key, value);
+    // Auto-expire
+    if (memoryTimers.has(key)) clearTimeout(memoryTimers.get(key));
+    memoryTimers.set(key, setTimeout(() => {
+        console.log(`[MEM_DEBUG] EXPIRED: ${key}`);
+        memoryStore.delete(key);
+        memoryTimers.delete(key);
+    }, ttlSeconds * 1000));
+}
+
+function memGet(key) {
+    const val = memoryStore.get(key) || null;
+    console.log(`[MEM_DEBUG] GET: ${key} = ${val}`);
+    return val;
+}
+
+function memDel(key) {
+    memoryStore.delete(key);
+    if (memoryTimers.has(key)) {
+        clearTimeout(memoryTimers.get(key));
+        memoryTimers.delete(key);
+    }
+}
+
+function memIncr(key) {
+    const val = parseInt(memoryStore.get(key) || '0') + 1;
+    memoryStore.set(key, val.toString());
+    return val;
+}
+
+// ─── Storage helpers (Redis with in-memory fallback) ───
+async function storeGet(key) {
+    try {
+        if (getUseRedis()) {
+            return await redisClient.get(key);
+        }
+    } catch (e) { /* fall through */ }
+    return memGet(key);
+}
+
+async function storeSetEx(key, ttl, value) {
+    try {
+        if (getUseRedis()) {
+            await redisClient.setex(key, ttl, value);
+            return;
+        }
+    } catch (e) { /* fall through */ }
+    memSet(key, value, ttl);
+}
+
+async function storeDel(key) {
+    try {
+        if (getUseRedis()) {
+            await redisClient.del(key);
+            return;
+        }
+    } catch (e) { /* fall through */ }
+    memDel(key);
+}
+
+async function storeIncr(key) {
+    try {
+        if (getUseRedis()) {
+            return await redisClient.incr(key);
+        }
+    } catch (e) { /* fall through */ }
+    return memIncr(key);
+}
+
+async function storeExpire(key, ttl) {
+    try {
+        if (getUseRedis()) {
+            await redisClient.expire(key, ttl);
+            return;
+        }
+    } catch (e) { /* fall through */ }
+    // For memory store, re-set the timer
+    const val = memGet(key);
+    if (val !== null) memSet(key, val, ttl);
+}
+
+// ─── Public API ───
 
 /**
  * Validates phone number format (E.164)
@@ -23,28 +112,34 @@ function validatePhoneNumber(phoneNumber) {
 async function generateOTP(phone) {
     const normalizedPhone = validatePhoneNumber(phone);
 
-    // Check request count for rate limiting
+    // Check request count for rate limiting (DISABLED FOR DEV)
+    /*
     const requestCountKey = `otp:requests:${normalizedPhone}`;
-    const requests = await redisClient.get(requestCountKey);
+    const requests = await storeGet(requestCountKey);
 
     if (requests && parseInt(requests) >= MAX_REQUESTS_PER_HOUR) {
         throw new Error('Too many OTP requests. Please try again in 1 hour.');
     }
+    */
 
-    const otp = crypto.randomInt(100000, 999999).toString();
+    // Hardcoded OTP for development as requested
+    const otp = '123456';
+    // const otp = crypto.randomInt(100000, 999999).toString();
 
     // Store OTP
-    await redisClient.setEx(`otp:${normalizedPhone}`, OTP_EXPIRY, otp);
+    await storeSetEx(`otp:${normalizedPhone}`, OTP_EXPIRY, otp);
 
     // Reset attempt count
-    await redisClient.del(`otp:attempts:${normalizedPhone}`);
+    await storeDel(`otp:attempts:${normalizedPhone}`);
 
+    /*
     // Increment request count
     if (!requests) {
-        await redisClient.setEx(requestCountKey, 3600, "1");
+        await storeSetEx(requestCountKey, 3600, "1");
     } else {
-        await redisClient.incr(requestCountKey);
+        await storeIncr(requestCountKey);
     }
+    */
 
     return otp;
 }
@@ -57,19 +152,19 @@ async function verifyOTP(phone, userOtp) {
     const otpKey = `otp:${normalizedPhone}`;
     const attemptKey = `otp:attempts:${normalizedPhone}`;
 
-    const storedOtp = await redisClient.get(otpKey);
+    const storedOtp = await storeGet(otpKey);
 
     if (!storedOtp) {
         throw new Error('OTP expired or not requested');
     }
 
-    if (storedOtp !== userOtp) {
-        const attempts = await redisClient.incr(attemptKey);
-        await redisClient.expire(attemptKey, OTP_EXPIRY);
+    if (storedOtp !== String(userOtp)) {
+        const attempts = await storeIncr(attemptKey);
+        await storeExpire(attemptKey, OTP_EXPIRY);
 
         if (attempts >= MAX_ATTEMPTS) {
-            await redisClient.del(otpKey);
-            await redisClient.del(attemptKey);
+            await storeDel(otpKey);
+            await storeDel(attemptKey);
             throw new Error('Too many wrong attempts. Please request a new OTP.');
         }
 
@@ -77,8 +172,8 @@ async function verifyOTP(phone, userOtp) {
     }
 
     // Success - delete OTP immediately (single use)
-    await redisClient.del(otpKey);
-    await redisClient.del(attemptKey);
+    await storeDel(otpKey);
+    await storeDel(attemptKey);
 
     return true;
 }
@@ -88,3 +183,4 @@ module.exports = {
     verifyOTP,
     validatePhoneNumber
 };
+

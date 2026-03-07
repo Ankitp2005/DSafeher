@@ -2,7 +2,8 @@ const twilio = require('twilio');
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
+const isStub = !accountSid || !authToken || accountSid.includes('dummy') || authToken.includes('dummy');
+const client = !isStub ? twilio(accountSid, authToken) : null;
 
 const twilioService = {
   sendOTP: async (phoneNumber, otp) => {

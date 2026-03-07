@@ -19,8 +19,9 @@ const rateLimitHandler = (req, res, next, options) => {
  * Key generator: Prioritize user_id from JWT, fallback to IP
  */
 const keyGenerator = (req) => {
-    const key = req.user && req.user.id ? `ratelimit:user:${req.user.id}` : `ratelimit:ip:${req.ip}`;
-    return key;
+    // For development, use IP to avoid global collisions for unauthenticated users
+    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    return req.user && req.user.id ? `ratelimit:user:${req.user.id}` : `ratelimit:ip:${clientIp}`;
 };
 
 const createLimiter = (options) => {
@@ -50,17 +51,18 @@ const createLimiter = (options) => {
 // 1. Global Limiter: 200/min per user, 30/min per IP
 const globalLimiter = createLimiter({
     windowMs: 60 * 1000,
-    limit: (req) => (req.user ? 200 : 30),
+    limit: 10000, // Huge limit for dev
     message: "Too many requests. Slow down.",
     prefix: 'rl:global:'
 });
 
 // 2. OTP Limiter: 3/hour per phone (in body), 5/hour per IP
+// 2. OTP Limiter: Increased for dev
 const otpLimiter = createLimiter({
-    windowMs: 60 * 60 * 1000,
-    limit: 5,
-    message: "Too many OTP requests. Try again in 1 hour.",
-    keyGenerator: (req) => `otp:${req.body.phone || req.ip}`,
+    windowMs: 1 * 60 * 1000, // 1 minute
+    limit: 10000, // Huge limit for dev
+    message: "Too many OTP requests. Try again in 1 minute.",
+    keyGenerator: (req) => `otp:${req.body.phone_number || req.body.phone || 'unknown'}`,
     prefix: 'rl:otp:'
 });
 
@@ -89,10 +91,11 @@ const routeLimiter = createLimiter({
 });
 
 // 6. Auth Limiter: 10 failures/15min, lock for 30min
+// 6. Auth Limiter: Increased for dev
 const authLimiter = createLimiter({
-    windowMs: 15 * 60 * 1000,
-    limit: 10,
-    message: "Too many login attempts. Try again in 30 minutes.",
+    windowMs: 1 * 60 * 1000, // 1 minute
+    limit: 10000, // Huge limit for dev
+    message: "Too many login attempts. Try again in 1 minute.",
     prefix: 'rl:auth:',
     extra: {
         skipSuccessfulRequests: true, // Only count failures

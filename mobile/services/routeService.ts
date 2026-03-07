@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.2.2:3000/api';
+const API_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.2.2:3001/api';
 
 export interface RouteSuggestion {
     id: string;

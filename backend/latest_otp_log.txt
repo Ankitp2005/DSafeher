@@ -1,0 +1,50 @@
+﻿At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Redis Connect   
+ ion Error: :String    
+) [], RemoteExcept    
+ion
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Redis Connection 
+Error: 
+Redis Connection 
+Error: 
+Redis Connection 
+Error: 
+Redis connection 
+failed permanently 
+after 3 retries. 
+Falling back to 
+in-memory store.
+[STUB] Twilio not configured. OTP for +911234567890: 361851
+[0mPOST /api/auth/send-otp [32m200[0m 13.476 ms - 33[0m
+Error in verify-otp: 
+Error: Invalid OTP
+    at verifyOTP 
+(C:\Users\Ankit pandey\
+Downloads\safeher\backe
+nd\src\services\otpServ
+ice.js:161:15)
+    at process.processT
+icksAndRejections (node
+:internal/process/task_
+queues:103:5)
+    at async 
+C:\Users\Ankit pandey\D
+ownloads\safeher\backen
+d\src\routes\auth.js:56
+:9
+[0mPOST /api/auth/verify-otp [33m401[0m 1.931 ms - 23[0m

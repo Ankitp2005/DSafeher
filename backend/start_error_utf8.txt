@@ -1,0 +1,75 @@
+﻿node : C:\Users\Ankit p
+andey\Downloads\safeher
+\backend\node_modules\t
+wilio\lib\base\BaseTwil
+io.js:83
+At line:1 char:1
++ node src/index.js > 
+start_error.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (C:\Users\Anki   
+ t ...aseTwilio.js:    
+83:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+                throw 
+new Error("accountSid 
+must start with AC" + 
+apiKeyMsg);
+                ^
+
+Error: accountSid must 
+start with AC
+    at 
+Twilio.setAccountSid 
+(C:\Users\Ankit pandey\
+Downloads\safeher\backe
+nd\node_modules\twilio\
+lib\base\BaseTwilio.js:
+83:23)
+    at new Client 
+(C:\Users\Ankit pandey\
+Downloads\safeher\backe
+nd\node_modules\twilio\
+lib\base\BaseTwilio.js:
+45:18)
+    at new Twilio 
+(C:\Users\Ankit pandey\
+Downloads\safeher\backe
+nd\node_modules\twilio\
+lib\rest\Twilio.js:33:9
+)
+    at TwilioSDK 
+(C:\Users\Ankit pandey\
+Downloads\safeher\backe
+nd\node_modules\twilio\
+lib\index.js:55:12)
+    at 
+Object.<anonymous> 
+(C:\Users\Ankit pandey\
+Downloads\safeher\backe
+nd\src\services\twilioS
+ervice.js:5:42)
+    at Module._compile 
+(node:internal/modules/
+cjs/loader:1761:14)
+    at Object..js (node
+:internal/modules/cjs/l
+oader:1893:10)
+    at Module.load (nod
+e:internal/modules/cjs/
+loader:1481:32)
+    at Module._load (no
+de:internal/modules/cjs
+/loader:1300:12)
+    at TracingChannel.t
+raceSync (node:diagnost
+ics_channel:328:14)
+
+Node.js v24.11.1

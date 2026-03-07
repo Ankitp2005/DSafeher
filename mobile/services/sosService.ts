@@ -5,7 +5,7 @@ import { locationService } from './locationService';
 import { evidenceService } from './evidenceService';
 
 const LOCALHOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-const API_URL = (process.env.EXPO_PUBLIC_API_URL as string) || `http://${LOCALHOST}:3000/api`;
+const API_URL = (process.env.EXPO_PUBLIC_API_URL as string) || `http://${LOCALHOST}:3001/api`;
 const SHAKE_THRESHOLD = 2.5; // Adjusted for sensitivity
 
 let lastShake = 0;

@@ -1,0 +1,50 @@
+﻿nd\src\index.js:42:5)
+    at Module._compile 
+(node:internal/modules/
+cjs/loader:1761:14)
+    at Object..js (node
+:internal/modules/cjs/l
+oader:1893:10)
+    at Module.load (nod
+e:internal/modules/cjs/
+loader:1481:32)
+    at Module._load (no
+de:internal/modules/cjs
+/loader:1300:12)
+    at TracingChannel.t
+raceSync (node:diagnost
+ics_channel:328:14)
+Emitted 'error' event 
+on Server instance at:
+    at emitErrorNT 
+(node:net:1976:8)
+    at process.processT
+icksAndRejections (node
+:internal/process/task_
+queues:89:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v24.11.1
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/index.js`[39m
+Server listening on port 3001 (0.0.0.0)
+Redis Connection 
+Error: 
+Redis Connection 
+Error: 
+Redis Connection 
+Error: 
+Redis Connection 
+Error: 
+Redis connection 
+failed permanently 
+after 3 retries. 
+Falling back to 
+in-memory store.
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

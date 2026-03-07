@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Accelerometer } from 'expo-sensors';
 import { SOSButton } from '../../components/sos/SOSButton';
 import { SOSCountdownModal } from '../../components/sos/SOSCountdownModal';
 import { sosService } from '../../services/sosService';
 import { fakeCallService } from '../../services/fakeCallService';
+import { Colors, Typography, Radius, Spacing, GlassCard, Shadows } from '../../constants/theme';
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -17,28 +19,23 @@ export default function HomeScreen() {
 
         const setupShake = async () => {
             let lastUpdate = 0;
-            const SHAKE_THRESHOLD_SOS = 3.5; // Very hard shake
-            const SHAKE_THRESHOLD_FAKE = 2.0; // Moderate shake
+            const SHAKE_THRESHOLD_SOS = 3.5;
+            const SHAKE_THRESHOLD_FAKE = 2.0;
 
             const isAvailable = await Accelerometer.isAvailableAsync();
-            if (!isAvailable) {
-                console.log('Accelerometer not available on this device');
-                return;
-            }
+            if (!isAvailable) return;
 
             subscription = Accelerometer.addListener((data: { x: number; y: number; z: number }) => {
                 const { x, y, z } = data;
                 const acceleration = Math.sqrt(x * x + y * y + z * z);
                 const now = Date.now();
 
-                if (now - lastUpdate > 1000) { // 1s debounce
+                if (now - lastUpdate > 1000) {
                     if (acceleration > SHAKE_THRESHOLD_SOS) {
                         lastUpdate = now;
-                        console.log('SOS Shake Detected');
                         setIsCountdownVisible(true);
                     } else if (acceleration > SHAKE_THRESHOLD_FAKE) {
                         lastUpdate = now;
-                        console.log('Fake Call Shake Detected');
                         fakeCallService.scheduleFakeCall(30, { callerName: 'Mom' });
                         alert('Fake call scheduled in 30s due to shake.');
                     }
@@ -49,15 +46,10 @@ export default function HomeScreen() {
         };
 
         setupShake();
-
-        return () => {
-            if (subscription) subscription.remove();
-        };
+        return () => { if (subscription) subscription.remove(); };
     }, []);
 
-    const handleSOSTrigger = async () => {
-        setIsCountdownVisible(true);
-    };
+    const handleSOSTrigger = () => setIsCountdownVisible(true);
 
     const handleSOSConfirm = async () => {
         setIsCountdownVisible(false);
@@ -65,63 +57,85 @@ export default function HomeScreen() {
             const data = await sosService.triggerSOS('button');
             router.push({ pathname: '/sos/active', params: { alertId: data.alert_id } });
         } catch (error) {
-            console.error("SOS Trigger Failed", error);
-            // Even if API fails, show active screen for local tracking/UI
             router.push('/sos/active');
         }
     };
 
-    const handleSOSCancel = () => {
-        setIsCountdownVisible(false);
+    const handleSOSCancel = () => setIsCountdownVisible(false);
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good Morning';
+        if (hour < 17) return 'Good Afternoon';
+        return 'Good Evening';
     };
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
+
+            {/* Header */}
             <View style={styles.header}>
                 <View>
-                    <Text style={styles.greeting}>Good Evening,</Text>
+                    <Text style={styles.greeting}>{getGreeting()},</Text>
                     <Text style={styles.userName}>SafeHer User</Text>
                 </View>
-                <TouchableOpacity style={styles.profileButton}>
-                    <Ionicons name="person-circle-outline" size={40} color="#4a5568" />
+                <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/settings')}>
+                    <LinearGradient
+                        colors={Colors.accentGradient}
+                        style={styles.profileGradient}
+                    >
+                        <Ionicons name="person" size={20} color="#fff" />
+                    </LinearGradient>
                 </TouchableOpacity>
             </View>
 
+            {/* Status Card */}
             <View style={styles.statusCard}>
                 <View style={styles.statusPill}>
                     <View style={styles.statusDot} />
-                    <Text style={styles.statusLabel}>Protected</Text>
+                    <Text style={styles.statusLabel}>PROTECTED</Text>
                 </View>
-                <Text style={styles.statusText}>You are currently in a safe area.</Text>
+                <Text style={styles.statusText}>You are currently in a safe area. All systems active.</Text>
             </View>
 
+            {/* SOS Button */}
             <View style={styles.sosContainer}>
                 <SOSButton onTrigger={handleSOSTrigger} />
             </View>
 
+            {/* Quick Actions */}
             <View style={styles.quickActions}>
                 <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/fake-call')}>
-                    <View style={[styles.actionIcon, { backgroundColor: '#ebf8ff' }]}>
-                        <Ionicons name="call-outline" size={24} color="#3182ce" />
+                    <View style={[styles.actionIcon, { backgroundColor: Colors.infoBg }]}>
+                        <Ionicons name="call-outline" size={22} color={Colors.info} />
                     </View>
                     <Text style={styles.actionLabel}>Fake Call</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionCard}>
-                    <View style={[styles.actionIcon, { backgroundColor: '#f0fff4' }]}>
-                        <Ionicons name="location-outline" size={24} color="#38a169" />
+                <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/check-in')}>
+                    <View style={[styles.actionIcon, { backgroundColor: Colors.safeBg }]}>
+                        <Ionicons name="location-outline" size={22} color={Colors.safe} />
                     </View>
                     <Text style={styles.actionLabel}>Check-In</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionCard}>
-                    <View style={[styles.actionIcon, { backgroundColor: '#fff5f5' }]}>
-                        <Ionicons name="map-outline" size={24} color="#e53e3e" />
+                <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/routes')}>
+                    <View style={[styles.actionIcon, { backgroundColor: Colors.warningBg }]}>
+                        <Ionicons name="map-outline" size={22} color={Colors.warning} />
                     </View>
                     <Text style={styles.actionLabel}>Safe Route</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(tabs)/community')}>
+                    <View style={[styles.actionIcon, { backgroundColor: 'rgba(214,36,110,0.1)' }]}>
+                        <Ionicons name="people-outline" size={22} color={Colors.accentPrimary} />
+                    </View>
+                    <Text style={styles.actionLabel}>Community</Text>
+                </TouchableOpacity>
             </View>
 
+            {/* Emergency Contacts */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Emergency Contacts</Text>
                 <View style={styles.contactsRow}>
@@ -132,7 +146,7 @@ export default function HomeScreen() {
                         <Text style={styles.contactInitial}>D</Text>
                     </View>
                     <TouchableOpacity style={styles.addContactCircle}>
-                        <Ionicons name="add" size={24} color="#718096" />
+                        <Ionicons name="add" size={22} color={Colors.textMuted} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -149,10 +163,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f7fafc',
+        backgroundColor: Colors.bgPrimary,
     },
     content: {
-        padding: 24,
+        padding: Spacing.xxl,
         paddingTop: 60,
         paddingBottom: 40
     },
@@ -160,128 +174,125 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 32
+        marginBottom: Spacing.xxxl,
     },
     greeting: {
-        fontSize: 16,
-        color: '#718096'
+        ...Typography.caption,
+        color: Colors.textSecondary,
     },
     userName: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#2d3748'
+        ...Typography.h1,
+        color: Colors.textPrimary,
+        marginTop: 2,
     },
     profileButton: {
-        padding: 4
+        borderRadius: 22,
+        overflow: 'hidden',
+    },
+    profileGradient: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     statusCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 32,
-        borderWidth: 1,
-        borderColor: '#edf2f7',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4
+        ...GlassCard,
+        padding: Spacing.xl,
+        marginBottom: Spacing.xxxl,
     },
     statusPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#f0fff4',
+        backgroundColor: Colors.safeBg,
         paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 20,
+        paddingVertical: 5,
+        borderRadius: Radius.pill,
         alignSelf: 'flex-start',
-        marginBottom: 12
+        marginBottom: Spacing.md,
+        borderWidth: 1,
+        borderColor: 'rgba(34,197,94,0.2)',
     },
     statusDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#38a169',
-        marginRight: 8
+        backgroundColor: Colors.safe,
+        marginRight: 8,
     },
     statusLabel: {
-        color: '#2f855a',
-        fontSize: 12,
-        fontWeight: 'bold'
+        color: Colors.safe,
+        ...Typography.small,
+        fontWeight: '700',
     },
     statusText: {
-        color: '#4a5568',
-        fontSize: 15
+        ...Typography.body,
+        color: Colors.textSecondary,
     },
     sosContainer: {
         alignItems: 'center',
-        marginVertical: 16
+        marginVertical: Spacing.lg,
     },
     quickActions: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 40,
-        marginBottom: 32
+        marginBottom: Spacing.xxxl,
     },
     actionCard: {
         alignItems: 'center',
-        width: '30%'
+        width: '23%',
     },
     actionIcon: {
-        width: 60,
-        height: 60,
-        borderRadius: 20,
+        width: 56,
+        height: 56,
+        borderRadius: Radius.lg,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 8,
-        elevation: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2
+        marginBottom: Spacing.sm,
+        borderWidth: 1,
+        borderColor: Colors.borderCard,
     },
     actionLabel: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#4a5568'
+        ...Typography.small,
+        color: Colors.textSecondary,
+        textAlign: 'center',
     },
     section: {
-        marginBottom: 24
+        marginBottom: Spacing.xxl,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#2d3748',
-        marginBottom: 16
+        ...Typography.h3,
+        color: Colors.textPrimary,
+        marginBottom: Spacing.lg,
     },
     contactsRow: {
         flexDirection: 'row',
-        gap: 12
+        gap: 12,
     },
     contactCircle: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#edf2f7',
+        backgroundColor: Colors.bgCard,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: '#cbd5e0'
+        borderColor: Colors.borderCard,
     },
     contactInitial: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#4a5568'
+        ...Typography.h3,
+        color: Colors.textPrimary,
     },
     addContactCircle: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: '#cbd5e0',
-        borderStyle: 'dashed'
-    }
+        borderColor: Colors.borderCard,
+        borderStyle: 'dashed',
+    },
 });

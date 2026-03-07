@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, StatusBar } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useFakeCallStore } from '../../store/fakeCallStore';
 import { fakeCallService } from '../../services/fakeCallService';
+import { Colors, Typography, Radius, Spacing, GlassCard } from '../../constants/theme';
 
 export default function FakeCallSetupScreen() {
     const { fakeCallSetup, setFakeCallSetup } = useOnboardingStore();
@@ -23,17 +26,25 @@ export default function FakeCallSetupScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.header}>Fake Call Simulator</Text>
+            <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
+            <View style={styles.headerSection}>
+                <Ionicons name="call" size={28} color={Colors.accentPrimary} />
+                <Text style={styles.header}>Fake Call</Text>
+            </View>
             <Text style={styles.subtext}>Trigger a realistic incoming phone call to excuse yourself from uncomfortable situations.</Text>
 
             <View style={styles.card}>
                 <Text style={styles.label}>Caller Name</Text>
-                <TextInput
-                    style={styles.input}
-                    value={callerName}
-                    onChangeText={setCallerNameLocal}
-                    placeholder="e.g. Mom, Boss, Home"
-                />
+                <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={18} color={Colors.textMuted} />
+                    <TextInput
+                        style={styles.input}
+                        value={callerName}
+                        onChangeText={setCallerNameLocal}
+                        placeholder="e.g. Mom, Boss, Home"
+                        placeholderTextColor={Colors.textMuted}
+                    />
+                </View>
 
                 <Text style={styles.label}>Trigger Call In:</Text>
                 <View style={styles.delayGrid}>
@@ -48,29 +59,38 @@ export default function FakeCallSetupScreen() {
                     ))}
                 </View>
 
-                <TouchableOpacity style={styles.scheduleBtn} onPress={handleSchedule}>
-                    <Text style={styles.scheduleBtnText}>Schedule Fake Call</Text>
+                <TouchableOpacity onPress={handleSchedule} activeOpacity={0.8} style={{ borderRadius: Radius.md, overflow: 'hidden', marginTop: Spacing.xxl }}>
+                    <LinearGradient colors={Colors.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.scheduleGradient}>
+                        <Ionicons name="call" size={20} color="#fff" />
+                        <Text style={styles.scheduleBtnText}>Schedule Fake Call</Text>
+                    </LinearGradient>
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.tipText}>💡 Tip: You can also shake your phone on the home screen to instantly trigger a 30s delayed fake call.</Text>
+            <View style={styles.tipCard}>
+                <Ionicons name="bulb-outline" size={18} color={Colors.warning} />
+                <Text style={styles.tipText}>Shake your phone on the home screen to instantly trigger a 30s delayed fake call.</Text>
+            </View>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flexGrow: 1, padding: 24, backgroundColor: '#f0f4f8' },
-    header: { fontSize: 28, fontWeight: 'bold', marginBottom: 8, color: '#2d3748' },
-    subtext: { fontSize: 16, color: '#718096', marginBottom: 24, lineHeight: 24 },
-    card: { backgroundColor: '#fff', padding: 24, borderRadius: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
-    label: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#4a5568', marginTop: 16 },
-    input: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, padding: 12, fontSize: 16, color: '#2d3748' },
-    delayGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 },
-    delayBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, backgroundColor: '#edf2f7', flex: 1, minWidth: '40%', alignItems: 'center' },
-    delayBtnActive: { backgroundColor: '#3182ce' },
-    delayBtnText: { color: '#4a5568', fontWeight: 'bold' },
-    delayBtnTextActive: { color: '#fff' },
-    scheduleBtn: { backgroundColor: '#38a169', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 32 },
-    scheduleBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    tipText: { marginTop: 24, fontSize: 14, color: '#718096', fontStyle: 'italic', textAlign: 'center' }
+    container: { flexGrow: 1, padding: Spacing.xxl, backgroundColor: Colors.bgPrimary, paddingTop: 60 },
+    headerSection: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.sm },
+    header: { ...Typography.h1, color: Colors.textPrimary },
+    subtext: { ...Typography.body, color: Colors.textSecondary, marginBottom: Spacing.xxl, lineHeight: 22 },
+    card: { ...GlassCard, padding: Spacing.xxl },
+    label: { ...Typography.bodyBold, color: Colors.textSecondary, marginBottom: Spacing.sm, marginTop: Spacing.lg },
+    inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bgInput, borderRadius: Radius.md, paddingHorizontal: Spacing.md, height: 50, borderWidth: 1, borderColor: Colors.borderInput, gap: Spacing.sm },
+    input: { flex: 1, ...Typography.body, color: Colors.textPrimary },
+    delayGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, marginTop: Spacing.sm },
+    delayBtn: { paddingVertical: 12, paddingHorizontal: Spacing.lg, borderRadius: Radius.md, backgroundColor: Colors.bgInput, flex: 1, minWidth: '40%', alignItems: 'center', borderWidth: 1, borderColor: Colors.borderInput },
+    delayBtnActive: { backgroundColor: 'rgba(214,36,110,0.1)', borderColor: Colors.accentPrimary },
+    delayBtnText: { color: Colors.textSecondary, fontWeight: '600' },
+    delayBtnTextActive: { color: Colors.accentPrimary },
+    scheduleGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: Spacing.sm },
+    scheduleBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+    tipCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginTop: Spacing.xxl, backgroundColor: Colors.warningBg, padding: Spacing.lg, borderRadius: Radius.md, borderWidth: 1, borderColor: 'rgba(251,191,36,0.2)' },
+    tipText: { flex: 1, ...Typography.caption, color: Colors.warning, lineHeight: 18 },
 });

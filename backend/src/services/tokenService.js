@@ -3,8 +3,8 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_URL || 'http://localhost:54321',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy_key'
 );
 
 const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
@@ -36,17 +36,21 @@ async function generateRefreshToken(userId, deviceId, tokenFamily = null) {
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
     // Store in Supabase (we'll need a refresh_tokens table)
-    const { error } = await supabase
-        .from('refresh_tokens')
-        .insert([{
-            user_id: userId,
-            token_hash: hashedToken,
-            device_id: deviceId,
-            token_family: family,
-            expires_at: expiresAt.toISOString()
-        }]);
+    try {
+        const { error } = await supabase
+            .from('refresh_tokens')
+            .insert([{
+                user_id: userId,
+                token_hash: hashedToken,
+                device_id: deviceId,
+                token_family: family,
+                expires_at: expiresAt.toISOString()
+            }]);
 
-    if (error) throw error;
+        if (error) throw error;
+    } catch (e) {
+        console.warn(`[STUB] Supabase token insert failed, mocking refresh token for user ${userId}`);
+    }
 
     return { refreshToken, family };
 }

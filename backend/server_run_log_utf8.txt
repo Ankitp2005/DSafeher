@@ -1,0 +1,10 @@
+﻿Error: 
+Redis Connection 
+Error: 
+Redis Connection 
+Error: 
+Redis connection 
+failed permanently 
+after 3 retries. 
+Falling back to 
+in-memory store.

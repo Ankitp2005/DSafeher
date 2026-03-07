@@ -10,6 +10,8 @@ const routesRoutes = require('./routes/routes');
 const reportsRoutes = require('./routes/reports');
 const adminRoutes = require('./routes/admin');
 const guardianRoutes = require('./routes/guardian');
+const checkInsRoutes = require('./routes/checkIns');
+const evidenceRoutes = require('./routes/evidence');
 const { globalLimiter, otpLimiter, sosLimiter, reportLimiter, routeLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
@@ -37,6 +39,6 @@ app.use('/api/guardian', guardianRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT} (0.0.0.0)`);
 });
