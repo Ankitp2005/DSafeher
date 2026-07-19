@@ -11,6 +11,6 @@ SafeHer is a comprehensive women's safety platform consisting of a React Native 
 5. **Caching**: Redis is used for fast and transient interactions, specifically for single-use OTP validation within the authentication flow.
 
 ## Notification Failover Chain
-1. Primary: Twilio SMS(it is paid)/resend(for mail).
+1. Primary: Twilio SMS.
 2. Secondary: Push Notifications (`expo-notifications` + Firebase Cloud Messaging).
 3. Tertiary: Twilio WhatsApp integration.
